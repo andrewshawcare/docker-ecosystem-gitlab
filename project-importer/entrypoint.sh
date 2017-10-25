@@ -1,11 +1,16 @@
 #!/bin/sh
-get_private_token() {
+wait_for_server() {
+  until curl --fail --location http://gitlab-ce/api/v4/projects; do
+    sleep 30
+  done
+}
+
+create_session() {
   curl \
     --request POST \
     --form 'login=root' \
     --form "password=${GITLAB_ROOT_PASSWORD}" \
-    http://gitlab-ce/api/v4/session \
-  | jq --raw-output '.private_token'
+    http://gitlab-ce/api/v4/session
 }
 
 create_project() {
@@ -21,11 +26,6 @@ create_project() {
     http://gitlab-ce/api/v4/projects
 }
 
-until curl --silent --location http://gitlab-ce/api/v4/session; do
-  sleep 30
-done
-
-private_token="$(get_private_token)"
 git_origin='https://github.com/andrewshawcare'
 project_names=$(cat <<'HEREDOC'
 docker-ecosystem-migration
@@ -34,6 +34,11 @@ docker-ecosystem-node-service
 docker-ecosystem-client
 HEREDOC
 )
+initial_project='docker-ecosystem-migration'
+
+wait_for_server
+
+private_token="$(create_session | jq --raw-output '.private_token')"
 
 for project_name in ${project_names}; do
   create_project "${private_token}" "${project_name}" "${git_origin}/${project_name}"
