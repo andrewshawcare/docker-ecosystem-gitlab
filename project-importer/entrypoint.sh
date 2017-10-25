@@ -34,7 +34,7 @@ search_for_projects_by_name() {
     --request GET \
     --get \
     --header "Private-Token: ${private_token}" \
-    --data "search=docker-ecosystem-migration" \
+    --data "search=${search}" \
     http://gitlab-ce/api/v4/projects
 }
 
